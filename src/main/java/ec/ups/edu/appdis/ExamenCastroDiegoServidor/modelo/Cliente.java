@@ -39,4 +39,5 @@ public class Cliente implements Serializable{
 	public void setFechaNacimiento(String fechaNacimiento) {
 		this.fechaNacimiento = fechaNacimiento;
 	}
+	
 }
