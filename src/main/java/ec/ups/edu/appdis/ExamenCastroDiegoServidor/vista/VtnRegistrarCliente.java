@@ -6,23 +6,37 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
+import org.hibernate.engine.transaction.jta.platform.internal.SynchronizationRegistryBasedSynchronizationStrategy;
+
+import ec.ups.edu.appdis.ExamenCastroDiegoServidor.modelo.Cliente;
+import ec.ups.edu.appdis.ExamenCastroDiegoServidor.negocio.ClienteONRemoto;
+
 import javax.swing.JLabel;
 import java.awt.Font;
-import javax.swing.JTextField;
-import javax.swing.JButton;
+import java.util.Hashtable;
 
-public class VtnRegistrarCliente extends JFrame {
+import javax.swing.JTextField;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
+public class VtnRegistrarCliente extends JFrame implements ActionListener {
 
 	private JPanel contentPane;
 	private JLabel lblNewLabel;
 	private JLabel lblNombre;
 	private JLabel lblApellido;
 	private JLabel lblFechaNacimiento;
-	private JTextField textField;
-	private JTextField textField_1;
-	private JTextField textField_2;
-	private JTextField textField_3;
-	private JButton btnNewButton;
+	private JTextField txtCedula;
+	private JTextField txtNombre;
+	private JTextField txtApellido;
+	private JTextField txtFechaNacimiento;
+	
+	private ClienteONRemoto on;
+	private JButton btnGuardar;
 
 	/**
 	 * Launch the application.
@@ -32,12 +46,38 @@ public class VtnRegistrarCliente extends JFrame {
 			public void run() {
 				try {
 					VtnRegistrarCliente frame = new VtnRegistrarCliente();
+					frame.referenciarONCliente();
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		});
+	}
+	
+	protected void referenciarONCliente() throws Exception {
+		try {  
+            final Hashtable<String, Comparable> jndiProperties =  
+                    new Hashtable<String, Comparable>();  
+            jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY,  
+                    "org.wildfly.naming.client.WildFlyInitialContextFactory");  
+            jndiProperties.put("jboss.naming.client.ejb.context", true);  
+              
+            jndiProperties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");  
+            jndiProperties.put(Context.SECURITY_PRINCIPAL, "ejbremoto");  
+            jndiProperties.put(Context.SECURITY_CREDENTIALS, "ejb01");  
+              
+            final Context context = new InitialContext(jndiProperties);  
+              
+            final String lookupName = "ejb:/ExamenCastroDiegoServidor/ClienteON!ec.ups.edu.appdis.ExamenCastroDiegoServidor.negocio.ClienteONRemoto";  
+              
+            on = (ClienteONRemoto) context.lookup(lookupName);  
+              
+        } catch (Exception ex) {  
+            ex.printStackTrace();  
+            throw ex;  
+        }
+		
 	}
 
 	/**
@@ -71,33 +111,62 @@ public class VtnRegistrarCliente extends JFrame {
 		lblFechaNacimiento.setBounds(10, 174, 134, 26);
 		contentPane.add(lblFechaNacimiento);
 		
-		textField = new JTextField();
-		textField.setFont(new Font("Tahoma", Font.BOLD, 15));
-		textField.setBounds(137, 28, 139, 26);
-		contentPane.add(textField);
-		textField.setColumns(10);
+		txtCedula = new JTextField();
+		txtCedula.setFont(new Font("Tahoma", Font.BOLD, 15));
+		txtCedula.setBounds(137, 28, 139, 26);
+		contentPane.add(txtCedula);
+		txtCedula.setColumns(10);
 		
-		textField_1 = new JTextField();
-		textField_1.setFont(new Font("Tahoma", Font.BOLD, 15));
-		textField_1.setColumns(10);
-		textField_1.setBounds(137, 79, 139, 26);
-		contentPane.add(textField_1);
+		txtNombre = new JTextField();
+		txtNombre.setFont(new Font("Tahoma", Font.BOLD, 15));
+		txtNombre.setColumns(10);
+		txtNombre.setBounds(137, 79, 139, 26);
+		contentPane.add(txtNombre);
 		
-		textField_2 = new JTextField();
-		textField_2.setFont(new Font("Tahoma", Font.BOLD, 15));
-		textField_2.setColumns(10);
-		textField_2.setBounds(137, 126, 139, 26);
-		contentPane.add(textField_2);
+		txtApellido = new JTextField();
+		txtApellido.setFont(new Font("Tahoma", Font.BOLD, 15));
+		txtApellido.setColumns(10);
+		txtApellido.setBounds(137, 126, 139, 26);
+		contentPane.add(txtApellido);
 		
-		textField_3 = new JTextField();
-		textField_3.setFont(new Font("Tahoma", Font.BOLD, 15));
-		textField_3.setColumns(10);
-		textField_3.setBounds(154, 174, 139, 26);
-		contentPane.add(textField_3);
+		txtFechaNacimiento = new JTextField();
+		txtFechaNacimiento.setFont(new Font("Tahoma", Font.BOLD, 15));
+		txtFechaNacimiento.setColumns(10);
+		txtFechaNacimiento.setBounds(154, 174, 139, 26);
+		contentPane.add(txtFechaNacimiento);
 		
-		btnNewButton = new JButton("Guardar");
-		btnNewButton.setFont(new Font("Tahoma", Font.BOLD, 15));
-		btnNewButton.setBounds(114, 271, 123, 34);
-		contentPane.add(btnNewButton);
+		btnGuardar = new JButton("Guardar");
+		btnGuardar.addActionListener(this);
+		btnGuardar.setFont(new Font("Tahoma", Font.BOLD, 15));
+		btnGuardar.setBounds(114, 259, 201, 43);
+		contentPane.add(btnGuardar);
 	}
+	
+	protected void actionPerformedBtnGuardar(ActionEvent e) {
+		guardarCliente();
+	}
+
+
+	private void guardarCliente() {
+		Cliente c = new Cliente();
+		c.setCedula(txtCedula.getText());
+		c.setNombre(txtNombre.getText());
+		c.setApellido(txtApellido.getText());
+		c.setFechaNacimiento(txtFechaNacimiento.getText());
+		
+		try {
+			on.registrarCliente(c);
+			System.out.println("Guardado Ok");
+		} catch (Exception e) {
+			System.out.println("Error al registrar");
+		}
+		
+		
+	}
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == btnGuardar) {
+			actionPerformedBtnGuardar(e);
+		}
+	}
+	
 }
